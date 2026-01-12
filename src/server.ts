@@ -14,7 +14,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Handle React Routing, return all requests to React app
-app.get('*', (req, res, next) => {
+app.get(/(.*)/, (req, res, next) => {
     // Skip API routes
     if (req.path.startsWith('/api')) return next();
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
