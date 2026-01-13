@@ -20,7 +20,10 @@ function App() {
       setStatus('complete');
     } catch (err: any) {
       console.error(err);
-      setErrorMsg(err.response?.data?.error || 'Failed to connect to scanner.');
+      setErrorMsg(
+        (err.response?.data?.error || 'Failed to connect to scanner.') +
+        (err.response?.data?.details ? `\nDetails: ${err.response.data.details}` : '')
+      );
       setStatus('error');
     }
   };

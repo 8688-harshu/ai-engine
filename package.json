@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "build:prod": "tsc && cd frontend && npm install && npm run build && cd .. && copyfiles -u 2 \"frontend/dist/**/*\" \"dist/public\"",
+    "build:prod": "tsc && cd frontend && npm install && npm run build && cd .. && copyfiles -u 2 \"frontend/dist/**/*\" \"dist/public\" && npx playwright install",
     "start": "node dist/server.js",
     "start:cli": "node dist/index.js",
     "serve": "ts-node src/server.ts",
