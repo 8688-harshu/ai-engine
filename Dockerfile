@@ -22,5 +22,5 @@ RUN npm run build:prod
 # Expose the port
 EXPOSE 3000
 
-# Start the server
-CMD ["npm", "start"]
+# Start the server using the clean command (no local path override)
+CMD ["npm", "run", "start:docker"]

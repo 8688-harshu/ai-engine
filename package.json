@@ -6,6 +6,7 @@
     "build": "tsc",
     "build:prod": "tsc && cd frontend && npm install && npm run build && cd .. && copyfiles -u 2 \"frontend/dist/**/*\" \"dist/public\" && npx playwright install",
     "start": "PLAYWRIGHT_BROWSERS_PATH=0 node dist/server.js",
+    "start:docker": "node dist/server.js",
     "start:cli": "node dist/index.js",
     "serve": "ts-node src/server.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
