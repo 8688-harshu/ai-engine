@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trust Engine Verification Page</title>
+    <style>
+        .hidden-button {
+            opacity: 0;
+            width: 50px;
+            height: 50px;
+        }
+        .covered-button {
+            position: absolute;
+            top: 200px;
+            left: 200px;
+            z-index: 1;
+        }
+        .cover {
+            position: absolute;
+            top: 200px;
+            left: 200px;
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 0, 0, 0.5);
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to our Legit Business</h1>
+    <p>We are the best company ever. Trust us completely.</p>
+    
+    <!-- Issue 1: Urgency Dark Pattern -->
+    <div id="urgent-offer">
+        <p>Only 2 minutes left to buy! Hurry up!</p>
+    </div>
+
+    <!-- Issue 2: Hidden Button -->
+    <button class="hidden-button">Hidden Action</button>
+
+    <!-- Issue 3: Covered Button -->
+    <button class="covered-button">Click Me If You Can</button>
+    <div class="cover"></div>
+
+    <!-- Issue 4: Accessible Button (Control) -->
+    <button>Safe Button</button>
+
+    <!-- Issue 5: Empty Button -->
+    <button id="empty-btn"></button>
+
+</body>
+</html>

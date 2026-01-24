@@ -10,12 +10,15 @@ function App() {
   const [report, setReport] = useState<any>(null);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handleScan = async (url: string) => {
+  const handleScan = async (url: string, authConfig?: any) => {
     setStatus('scanning');
     setErrorMsg('');
     setReport(null);
     try {
-      const response = await axios.post('/api/scan', { url });
+      const payload: any = { url };
+      if (authConfig) payload.auth = authConfig;
+
+      const response = await axios.post('/api/scan', payload);
       setReport(response.data);
       setStatus('complete');
     } catch (err: any) {

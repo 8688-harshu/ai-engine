@@ -12,7 +12,26 @@ export class SemanticAnalyzer {
     }
 
     async analyze(page: Page, url: string): Promise<Issue[]> {
+        // Optimization: Only run expensive AI analysis on "Key" pages (Home, About, Contact, Terms)
+        // or up to a maximum number of random pages to save time/tokens.
+        const urlObj = new URL(url);
+        const path = urlObj.pathname.toLowerCase();
+
+        const isKeyPage = path === '/' ||
+            path.includes('about') ||
+            path.includes('contact') ||
+            path.includes('trust') ||
+            path.includes('terms') ||
+            path.includes('privacy');
+
+        // Skip AI for other pages to drastically speed up crawl
+        if (!isKeyPage && Math.random() > 0.1) { // 10% chance to scan random deep page
+            return [];
+        }
+
         const textContent = await ContentExtractor.extract(page);
+
+        if (!textContent || textContent.length < 50) return []; // Skip empty pages
 
         const prompt = `
         You are an expert website quality and trust auditor. Analyze the following website text content for issues related to:
@@ -27,7 +46,8 @@ export class SemanticAnalyzer {
         - "description": A concise description of the issue.
         - "remediation": Advice on how to fix it.
         - "userImpact": How this affects the user.
-
+        - "exactQuote": The EXACT text substring from the page that triggers this issue. This is CRITICAL for highlighting. If it is a general issue, use null.
+        
         If the website seems mostly fine, return an empty list.
         
         Example Output Format:
@@ -36,9 +56,10 @@ export class SemanticAnalyzer {
                 {
                     "category": "Trust",
                     "severity": "High",
-                    "description": "Detected 'Urgency' dark pattern: 'Only 2 minutes left to buy!'",
+                    "description": "Detected 'Urgency' dark pattern",
                     "remediation": "Remove artificial countdown timers.",
-                    "userImpact": "Creates false anxiety and pressure."
+                    "userImpact": "Creates false anxiety and pressure.",
+                    "exactQuote": "Only 2 minutes left to buy!"
                 }
             ]
         }
@@ -55,16 +76,55 @@ export class SemanticAnalyzer {
 
             if (!result.issues || !Array.isArray(result.issues)) return [];
 
-            return result.issues.map((i: any) => ({
-                id: uuidv4(),
-                url: url,
-                category: i.category || 'Semantic',
-                severity: i.severity || 'Medium',
-                description: i.description,
-                remediation: i.remediation,
-                userImpact: i.userImpact,
-                evidence: 'AI Analysis'
+            const issuesWithLocs = await Promise.all(result.issues.map(async (i: any) => {
+                let currentLoc = 'Page Body';
+
+                if (i.exactQuote) {
+                    // Try to find the selector for this text
+                    try {
+                        const selector = await page.evaluate((quote: string) => {
+                            // Simple text search in DOM
+                            const elements = Array.from(document.querySelectorAll('body *'));
+                            // Filter for leaf nodes or nodes with specific text
+                            const match = elements.find(el => el.childNodes.length > 0 && Array.from(el.childNodes).some(n => n.nodeType === 3 && n.textContent?.includes(quote)));
+
+                            if (!match) return null;
+
+                            // Generate a simple path selector
+                            const getPath = (el: Element): string => {
+                                if (el.id) return '#' + el.id;
+                                if (el === document.body) return 'body';
+                                if (!el.parentElement) return el.tagName.toLowerCase();
+
+                                const siblings = Array.from(el.parentElement.children);
+                                const index = siblings.indexOf(el) + 1;
+                                return getPath(el.parentElement) + ' > ' + el.tagName.toLowerCase() + ':nth-child(' + index + ')';
+                            };
+
+                            return getPath(match);
+                        }, i.exactQuote);
+
+                        if (selector) currentLoc = selector;
+                    } catch (e) {
+                        console.warn('Failed to locate element for quote:', i.exactQuote);
+                    }
+                }
+
+                return {
+                    id: uuidv4(),
+                    url: url,
+                    category: i.category || 'Semantic',
+                    severity: i.severity || 'Medium',
+                    description: i.description,
+                    remediation: i.remediation,
+                    userImpact: i.userImpact,
+                    evidence: 'AI Analysis',
+                    location: currentLoc,
+                    snippet: i.exactQuote || undefined
+                };
             }));
+
+            return issuesWithLocs;
 
         } catch (e) {
             console.error('Failed to parse AI response:', e);

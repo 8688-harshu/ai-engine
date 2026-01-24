@@ -2,12 +2,13 @@ import { Issue, HygieneScore } from '../types';
 
 export class Scoring {
     private static WEIGHTS = {
-        functionality: 20,
-        performance: 15,
-        uiUx: 15,
+        functionality: 15,
+        performance: 10,
+        uiUx: 10,
         reliability: 10,
         content: 10,
-        semantic: 30 // High weight for AI insights
+        semantic: 25,
+        accessibility: 20 // Major component of trust
     };
 
     private static DEDUCTIONS = {
@@ -17,13 +18,14 @@ export class Scoring {
     };
 
     static calculate(issues: Issue[]): HygieneScore {
-        let breakdown: any = { // Using any temporarily to cheat dynamic key access
+        let breakdown: any = {
             functionality: Scoring.WEIGHTS.functionality,
             performance: Scoring.WEIGHTS.performance,
             uiUx: Scoring.WEIGHTS.uiUx,
             reliability: Scoring.WEIGHTS.reliability,
             content: Scoring.WEIGHTS.content,
-            semantic: Scoring.WEIGHTS.semantic
+            semantic: Scoring.WEIGHTS.semantic,
+            accessibility: Scoring.WEIGHTS.accessibility
         };
 
         for (const issue of issues) {
@@ -38,7 +40,7 @@ export class Scoring {
                 case 'UI/UX':
                     breakdown.uiUx -= deduction;
                     break;
-                case 'Network': // Map network to reliability
+                case 'Network':
                     breakdown.reliability -= deduction;
                     break;
                 case 'Content':
@@ -47,6 +49,9 @@ export class Scoring {
                 case 'Semantic':
                 case 'Trust':
                     breakdown.semantic -= deduction;
+                    break;
+                case 'Accessibility':
+                    breakdown.accessibility -= deduction;
                     break;
             }
         }
@@ -62,7 +67,8 @@ export class Scoring {
             breakdown.uiUx +
             breakdown.reliability +
             breakdown.content +
-            breakdown.semantic;
+            breakdown.semantic +
+            breakdown.accessibility;
 
         return {
             total: Math.round(total),

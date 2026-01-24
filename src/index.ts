@@ -13,6 +13,8 @@ program
     .argument('<url>', 'Website URL to scan')
     .option('-h, --headless', 'Run in headless mode', true)
     .option('-o, --output <dir>', 'Output directory for reports', './reports')
+    .option('-p, --max-pages <number>', 'Maximum pages to crawl', '10')
+    .option('-d, --max-depth <number>', 'Maximum crawl depth', '2')
     .action(async (url, options) => {
         console.log(chalk.blue(`Starting scan for: ${url}`));
 
@@ -21,9 +23,23 @@ program
             url = 'https://' + url;
         }
 
+        try {
+            const validUrl = new URL(url);
+            // Basic check to see if it looks like a concatenated error (two https schemes)
+            if (validUrl.pathname.includes('https:') || validUrl.pathname.includes('http:')) {
+                console.error(chalk.red('Error: Invalid URL detected. Did you accidentally paste two URLs?'));
+                console.error(chalk.yellow(`Input: ${url}`));
+                process.exit(1);
+            }
+        } catch (e) {
+            console.error(chalk.red('Error: Invalid URL format provided.'));
+            process.exit(1);
+        }
+
         const coordinator = new Coordinator({
             startUrl: url,
-            maxPages: 10, // Default limit
+            maxPages: parseInt(options.maxPages, 10),
+            maxDepth: parseInt(options.maxDepth, 10),
             headless: options.headless !== 'false', // commander weirdness with boolean flags sometimes
         });
 
